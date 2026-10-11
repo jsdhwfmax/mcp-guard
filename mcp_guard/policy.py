@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import fnmatch
+import re
 from pathlib import Path
 from typing import Any, cast
 
@@ -11,6 +12,35 @@ from pydantic import BaseModel, Field
 
 from .models import MCPManifest, RiskFinding, RiskLevel
 from .parser import as_permission_list
+
+
+def _anchor_pattern(pattern: str) -> str:
+    """Anchor a glob pattern so it matches the full string, not a substring.
+
+    ``fnmatch.fnmatch`` is unanchored: ``fnmatch.fnmatch("github", "hub")``
+    returns True because ``*hub*`` matches anywhere. This lets a deny rule
+    like ``hub*`` match ``github`` or ``myhub-server`` when the operator
+    meant only names starting with ``hub``. Wrapping the pattern in
+    ``^...$`` (via ``re.fullmatch``) makes the match strict (#37).
+    """
+    # fnmatch.translate converts a glob to a regex; we anchor it explicitly.
+    regex = fnmatch.translate(pattern)
+    # fnmatch.translate already produces a full-match regex in Python 3.8+,
+    # but we anchor defensively for clarity and future-proofing.
+    if not regex.startswith("^"):
+        regex = "^" + regex
+    if not regex.endswith("$"):
+        regex = regex + "$"
+    return regex
+
+
+def _glob_match(value: str, pattern: str) -> bool:
+    """Strict glob match: pattern must match the entire value."""
+    try:
+        return re.fullmatch(_anchor_pattern(pattern), value, re.IGNORECASE) is not None
+    except re.error:
+        # Invalid pattern — fall back to fnmatch for backwards compatibility
+        return fnmatch.fnmatchcase(value, pattern)
 
 
 class DenyPolicy(BaseModel):
@@ -62,7 +92,7 @@ class DenyPolicy(BaseModel):
         Returns (is_denied, matched_pattern).
         """
         for pattern in self.servers:
-            if fnmatch.fnmatch(server_name, pattern):
+            if _glob_match(server_name, pattern):
                 return True, pattern
         return False, None
 
@@ -80,18 +110,18 @@ class DenyPolicy(BaseModel):
         """
         for pattern in self.tools:
             # Direct match on tool name (exact or wildcard)
-            if fnmatch.fnmatch(tool_name, pattern):
+            if _glob_match(tool_name, pattern):
                 return True, pattern
 
             if server_name:
                 qualified = f"{server_name}/{tool_name}"
-                if fnmatch.fnmatch(qualified, pattern):
+                if _glob_match(qualified, pattern):
                     return True, pattern
 
                 # Check server/tool split pattern e.g. "github-*/delete_*"
                 if "/" in pattern:
                     srv_pat, tool_pat = pattern.split("/", 1)
-                    if fnmatch.fnmatch(server_name, srv_pat) and fnmatch.fnmatch(
+                    if _glob_match(server_name, srv_pat) and _glob_match(
                         tool_name, tool_pat
                     ):
                         return True, pattern

@@ -249,9 +249,25 @@ class MCPParser:
     ]
 
     @classmethod
+    def _validate_path(cls, path: str | Path) -> Path:
+        """Validate that a path is safe to read.
+
+        Rejects paths with ``..`` components that could escape the intended
+        directory tree (#39). This is a lightweight guard — it does not
+        prevent reading absolute paths or symlinks, but it blocks the most
+        common traversal pattern.
+        """
+        p = Path(path)
+        if ".." in p.parts:
+            raise ValueError(
+                f"Path '{path}' contains '..' which may escape the intended directory."
+            )
+        return p
+
+    @classmethod
     def from_file(cls, path: str | Path) -> MCPManifest:
         """Parse an MCP manifest from a file path."""
-        path = Path(path)
+        path = cls._validate_path(path)
         if path.is_dir():
             return cls.from_directory(path)
         return cls.from_json(path)
@@ -259,7 +275,7 @@ class MCPParser:
     @classmethod
     def from_directory(cls, dir_path: str | Path) -> MCPManifest:
         """Find and parse MCP config in a directory."""
-        dir_path = Path(dir_path)
+        dir_path = cls._validate_path(dir_path)
         for config_name in cls.CONFIG_FILES:
             config_path = dir_path / config_name
             if config_path.exists():
@@ -283,7 +299,9 @@ class MCPParser:
         if not isinstance(data, dict):
             raise ValueError(f"Expected JSON object in {json_path}, got {type(data).__name__}")
 
-        return cls.from_dict(cast("dict[str, Any]", data))
+        manifest = cls.from_dict(cast("dict[str, Any]", data))
+        manifest.source_path = str(json_path)
+        return manifest
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> MCPManifest:

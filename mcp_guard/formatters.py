@@ -67,6 +67,10 @@ def to_sarif(result: ScanResult) -> dict[str, Any]:
         )
         auth_status = cap.auth_status if cap else "unknown"
 
+        # Use the original source path for SARIF dedup, falling back to a
+        # synthetic path if not available (#38).
+        source_uri = result.manifest.source_path or f"mcp-server/{finding.capability_name}"
+
         results.append(
             {
                 "ruleId": finding.rule_id,
@@ -76,7 +80,7 @@ def to_sarif(result: ScanResult) -> dict[str, Any]:
                     {
                         "physicalLocation": {
                             "artifactLocation": {
-                                "uri": f"mcp-server/{finding.capability_name}",
+                                "uri": source_uri,
                             }
                         }
                     }

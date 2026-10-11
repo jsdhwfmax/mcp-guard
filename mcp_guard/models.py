@@ -60,6 +60,8 @@ class MCPManifest(BaseModel):
     description: str = ""
     capabilities: list[MCPCapability] = Field(default_factory=list[MCPCapability])
     metadata: dict[str, Any] = Field(default_factory=dict)
+    # Original file path the manifest was loaded from, for SARIF artifactLocation.
+    source_path: str = ""
 
 
 class RiskFinding(BaseModel):
