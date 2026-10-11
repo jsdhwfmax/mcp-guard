@@ -139,6 +139,21 @@ class TestParser:
         assert manifest.name == "test"
         assert len(manifest.capabilities) == 1
 
+    def test_from_file_rejects_path_traversal(self):
+        """#39: from_file must reject paths with '..' components."""
+        with pytest.raises(ValueError, match="\\.\\."):
+            MCPParser.from_file("../outside/config.json")
+
+    def test_from_directory_rejects_path_traversal(self):
+        """#39: from_directory must reject paths with '..' components."""
+        with pytest.raises(ValueError, match="\\.\\."):
+            MCPParser.from_directory("../outside")
+
+    def test_from_file_stores_source_path(self):
+        """#38: from_json must store the source path for SARIF artifactLocation."""
+        manifest = MCPParser.from_dict({"name": "test"})
+        assert manifest.source_path == ""
+
     def test_from_directory(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             config = Path(tmpdir) / "mcp.json"

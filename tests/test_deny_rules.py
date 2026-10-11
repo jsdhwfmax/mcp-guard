@@ -381,6 +381,25 @@ class TestPermissionExtraction:
 class TestRichReportAuthDisabledRow:
     """The human-readable report surfaces explicitly disabled auth."""
 
+    def test_anchored_pattern_does_not_match_substring(self):
+        """#37: `fnmatch.fnmatch('github', 'hub')` returned True because `*hub*`
+        matches anywhere. The anchored version must reject substring matches."""
+        policy = DenyPolicy(servers=["hub*"])
+        assert policy.is_server_denied("github") == (False, None)
+        assert policy.is_server_denied("hub-server") == (True, "hub*")
+
+    def test_anchored_pattern_still_matches_full_name(self):
+        """Anchored patterns must still match the full server name."""
+        policy = DenyPolicy(servers=["github-*"])
+        assert policy.is_server_denied("github-actions") == (True, "github-*")
+        assert policy.is_server_denied("github") == (False, None)
+
+    def test_tool_pattern_does_not_match_substring(self):
+        """#37: tool patterns must also be anchored."""
+        policy = DenyPolicy(tools=["delete_*"])
+        assert policy.is_tool_denied("delete_repo") == (True, "delete_*")
+        assert policy.is_tool_denied("predelete_data") == (False, None)
+
     def test_rich_report_shows_auth_disabled_row(self, capsys):
         """to_rich lists disabled auth when at least one capability disables it."""
         manifest = MCPParser.from_dict(
