@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-11
+
+### Security
+- **fix(policy)**: anchor fnmatch patterns to prevent unanchored regex bypass — `fnmatch.fnmatch("github", "hub")` returned True because `*hub*` matches anywhere; deny rules like `hub*` could match unintended servers. Patterns are now anchored with `^...$` via `re.fullmatch` (#37)
+- **fix(formatters)**: preserve original file path in SARIF `artifactLocation.uri` for proper GitHub Code Scanning dedup — was always `mcp-server/<capability_name>`, losing the source file path (#38)
+- **fix(parser)**: block path traversal via `..` components in `from_file`/`from_directory` — paths with `..` now raise `ValueError` (#39)
+
 ## [0.2.0] - 2026-10-05
 
 ### Fixed
