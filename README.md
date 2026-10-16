@@ -31,6 +31,8 @@ docker run --rm -v "$PWD:/work" ghcr.io/yunaremaia/mcp-guard:latest scan /work/m
 
 ## Quick Start
 
+_Get started in 5 minutes_:
+
 ```bash
 # Scan an MCP server directory
 mcp-guard scan ./my-mcp-server
