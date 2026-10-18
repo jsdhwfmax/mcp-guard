@@ -253,7 +253,7 @@ def _js_object_literal(text: str) -> str:
         stripped,
     )
     if m:
-        stripped = stripped[m.end():]
+        stripped = stripped[m.end() :]
     start = stripped.find("{")
     if start == -1:
         return stripped.rstrip("; \t")
@@ -374,9 +374,7 @@ class MCPParser:
             raise ValueError(f"Cannot read {yaml_path}: {e}") from e
 
         if not isinstance(data, dict):
-            raise ValueError(
-                f"Expected a YAML object in {yaml_path}, got {type(data).__name__}"
-            )
+            raise ValueError(f"Expected a YAML object in {yaml_path}, got {type(data).__name__}")
 
         manifest = cls.from_dict(cast("dict[str, Any]", data))
         manifest.source_path = str(yaml_path)
@@ -409,8 +407,7 @@ class MCPParser:
 
         if not isinstance(data, dict):
             raise ValueError(
-                f"Expected a JavaScript object in {js_path}, "
-                f"got {type(data).__name__}"
+                f"Expected a JavaScript object in {js_path}, got {type(data).__name__}"
             )
 
         manifest = cls.from_dict(cast("dict[str, Any]", data))
