@@ -15,10 +15,10 @@ The MCP ecosystem exploded (67,000+ servers in 18 months), but security hasn't k
 
 ## Install
 
-`mcp-guard` is not published on PyPI. Install it directly from the repository:
+`mcp-guard` is published on PyPI as `mcp-guard-py`:
 
 ```bash
-pip install git+https://github.com/yunaremaia/mcp-guard.git
+pip install mcp-guard-py
 ```
 
 Requires Python 3.10 or newer.
@@ -59,7 +59,7 @@ mcp-guard scan ./my-mcp-server --config policy.yaml --deny
 mcp-guard scan ./my-mcp-server --deny-server "untrusted-*" --deny
 
 # Add Little Canary's structural filter to prompt injection checks
-# (requires: pip install "mcp-guard[canary] @ git+https://github.com/yunaremaia/mcp-guard.git")
+# (requires: pip install "mcp-guard-py[canary]")
 mcp-guard scan ./my-mcp-server --strict-injection
 
 # Verify npm supply chain (sigstore attestations / provenance)
@@ -312,7 +312,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install git+https://github.com/yunaremaia/mcp-guard.git
+      - run: pip install mcp-guard-py
       - run: mcp-guard scan ./mcp-server --format sarif --output results.sarif
       - uses: github/codeql-action/upload-sarif@v3
         with:
